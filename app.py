@@ -1,5 +1,6 @@
 # Dash app initialization
 import dash
+import dash_bootstrap_components as dbc
 
 # User management initialization
 import os
@@ -8,7 +9,7 @@ from users_mgt import db, User as base
 from config import config
 
 
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUMEN])
 server = app.server
 app.config.suppress_callback_exceptions = True
 

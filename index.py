@@ -13,7 +13,7 @@ navBar = dbc.Navbar(
     id="navBar",
     children=[],
     sticky="top",
-    color="primary",
+    color="light",
     className="navbar navbar-expand-lg navbar-dark bg-primary",
 )
 
