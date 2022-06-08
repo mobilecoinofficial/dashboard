@@ -1,3 +1,6 @@
 
 [database]
 con = sqlite:///app.db
+
+[zero]
+server = localhost:5557

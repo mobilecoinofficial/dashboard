@@ -1,24 +1,41 @@
-# Dash packages
+import logging
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from dash import html, dcc
+from zero import ZeroClient
 
-
-from app import app
+from config import config
 
 # This is mock data representing small amounts of MOB sent out over the last 90 days
-data = pd.read_csv("mob_sent_out.csv")
+# data = pd.read_csv("mob_sent_out.csv")
+
+# Make a zero client and use it to call the ledger API
+client = ZeroClient("0.0.0.0", 5559)
+# records = False
+# if not records:
+records = client.call("call_ledger_method", "get_all_txs")
+data = pd.DataFrame(records)
+data["amount_usd"] = data["amount_usd_cents"] / 100
+data["amount_mob"] = data["amount_pmob"] / 1e12
+logging.info(data)
 
 # This is a histogram of accumulation per user
-mob_by_user = px.histogram(data, x="To User", y="Amount in USD")
+user_payouts = go.Figure()
+user_payouts.add_trace(
+    go.Histogram(x=data["account"], y=data["amount_usd"], histfunc="sum")
+)
+user_payouts.add_trace(
+    go.Histogram(x=data["account"], y=data["amount_mob"], histfunc="sum")
+)
+user_payouts.update_layout(barmode="overlay")
+user_payouts.update_traces(opacity=0.7)
+
+# Get a the mob_
 
 # This is a line graph of accumulated MOB sent out over time
-mob_over_time = px.line(
-    data,
-    x="Date",
-    y=data["Amount in USD"].cumsum(),
-)
+payouts_over_time = px.line(data, x="ts", y=data["amount_usd"].cumsum())
 
 # This is the big red button that stops the distribution of MOB
 emergency_button = [
@@ -56,16 +73,16 @@ layout = dbc.Container(
     [
         html.H1("Magic MOB Mover Machine Analytics"),
         html.Hr(),
-        html.H2("MOB Sent Out by User"),
+        html.H2("MOB sent to each user"),
         dbc.Row(
             children=[
-                dcc.Graph(id="user-graph", figure=mob_by_user),
+                dcc.Graph(id="user-graph", figure=user_payouts),
             ]
         ),
-        html.H2("MOB Sent Out over time"),
+        html.H2("Total USD value sent out over time"),
         dbc.Row(
             children=[
-                dcc.Graph(id="time-graph", figure=mob_over_time),
+                dcc.Graph(id="time-graph", figure=payouts_over_time),
             ]
         ),
         dbc.Row(
@@ -75,6 +92,7 @@ layout = dbc.Container(
                 ),
             ],
         ),
+        html.Hr(),
         dbc.Row(),
     ],
     className="mt-4",
